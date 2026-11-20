@@ -1,0 +1,23 @@
+model Order {
+  id              Int       @id @default(autoincrement())
+  orderId         String    @unique
+  customerName    String
+  customerPhone   String
+  customerAddress String
+  items           Json
+  subtotal        Float
+  tax             Float
+  deliveryFee     Float
+  totalAmount     Float
+  specialNotes    String    @default("")
+  paymentMethod   String    @default("cash")
+  paymentStatus   String    @default("pending")
+  status          String    @default("pending")
+  estimatedTime   Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  statusHistory   StatusHistory[]
+
+  @@index([customerPhone])
+  @@index([status])
+}
