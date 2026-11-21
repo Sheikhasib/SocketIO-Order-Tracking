@@ -57,6 +57,12 @@ export default function Header({
 
             <nav className="hidden md:flex items-center gap-4">
               <ConnectionStatus connected={connected} />
+              <Link
+                href="/orders"
+                className="hover:bg-blue-500 px-4 py-2 rounded-lg transition font-medium"
+              >
+                📦 My Orders
+              </Link>
               {showAdmin && (
                 <Link
                   href="/admin"
@@ -83,6 +89,15 @@ export default function Header({
               <span className="font-semibold text-gray-500">Status</span>
               <ConnectionStatus connected={connected} />
             </div>
+
+            <Link
+              href="/orders"
+              onClick={() => setIsMenuOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition font-medium text-gray-700"
+            >
+              <span>📦</span>
+              <span>My Orders</span>
+            </Link>
 
             {showAdmin && (
               <Link
