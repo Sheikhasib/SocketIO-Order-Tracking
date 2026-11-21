@@ -80,6 +80,7 @@ const OrderHistory = ({ socket, onShowNotification }: Props) => {
           setShowPhoneInput(false);
           localStorage.setItem("customerPhone", phone);
         } else {
+          setShowPhoneInput(true);
           onShowNotification("Failed to load orders", "error");
         }
       },
@@ -88,11 +89,16 @@ const OrderHistory = ({ socket, onShowNotification }: Props) => {
 
   useEffect(() => {
     const savedPhone = localStorage.getItem("customerPhone");
+
     if (!savedPhone) {
       setLoading(false);
       return;
     }
+
     setCustomerPhone(savedPhone);
+
+    setShowPhoneInput(false); // লোড হওয়ার সময় spinner দেখাও, ফর্ম নয়
+
     // socket এখনও null হলে অপেক্ষা করো, এলে effect আবার চলবে
     if (socket) loadOrders(savedPhone);
   }, [socket]);
@@ -192,6 +198,7 @@ const OrderHistory = ({ socket, onShowNotification }: Props) => {
           <button
             onClick={() => {
               localStorage.removeItem("customerPhone");
+              setCustomerPhone("");
               setShowPhoneInput(true);
               setOrders([]);
             }}
