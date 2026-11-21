@@ -19,6 +19,7 @@ export interface OrderItem {
   quantity: number;
   price: number;
   image?: string;
+  specialInstructions?: string;
 }
 
 export interface StatusHistoryEntry {
@@ -66,3 +67,5 @@ export interface PlaceOrderResponse {
   message?: string;
   order?: Order;
 }
+
+export type OrderResponse = PlaceOrderResponse;

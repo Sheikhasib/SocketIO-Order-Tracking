@@ -69,13 +69,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [cart, hydrated]);
 
   // Show notification helper
-  const showNotification = (
-    message: string,
-    type: NotificationType = "success",
-  ) => {
-    // Set the notification state to display the notification
-    setNotification({ message, type });
-  };
+  const showNotification = useCallback(
+    (message: string, type: NotificationType = "success") => {
+      setNotification({ message, type });
+    },
+    [],
+  );
 
   // Close notification helper
   const closeNotification = useCallback(() => setNotification(null), []);

@@ -9,6 +9,10 @@ import {
 } from "../utils/helper.js";
 import { OrderInput } from "../Interfaces/index.js";
 
+const reply = (callback: unknown, payload: Record<string, unknown>) => {
+  if (typeof callback === "function") callback(payload);
+};
+
 type Callback = (res: Record<string, unknown>) => void;
 
 const withHistory = { statusHistory: true } as const;
@@ -28,7 +32,7 @@ export const orderHandler = (io: Server, socket: Socket): void => {
 
       // If validation fails, return an error message to the client
       if (!validation.valid) {
-        return callback({ success: false, message: validation.message });
+        return reply(callback, { success: false, message: validation.message });
       }
 
       const totals = calculateTotals(data.items!);
@@ -48,11 +52,11 @@ export const orderHandler = (io: Server, socket: Socket): void => {
       io.to("admins").emit("newOrder", { order });
 
       // Return a success response to the client with the order details and a message
-      callback({ success: true, order });
+      reply(callback, { success: true, order });
       console.log(`✅ Order created: ${orderId}`);
     } catch (error) {
       console.error("❌ Place order error:", error);
-      callback({ success: false, message: "Failed to place order" });
+      reply(callback, { success: false, message: "Failed to place order" });
     }
   });
 
@@ -67,16 +71,19 @@ export const orderHandler = (io: Server, socket: Socket): void => {
         });
 
         if (!order)
-          return callback({ success: false, message: "Order not found" });
+          return reply(callback, {
+            success: false,
+            message: "Order not found",
+          });
 
         // Join the socket to a room specific to this order for real-time updates
         socket.join(`order_${data.orderId}`);
 
         // Return the order details to the client after joining the room
-        callback({ success: true, order });
+        reply(callback, { success: true, order });
       } catch (error) {
         console.error("❌ Track order error:", error);
-        callback({ success: false, message: "Failed to load order" });
+        reply(callback, { success: false, message: "Failed to load order" });
       }
     },
   );
@@ -91,11 +98,14 @@ export const orderHandler = (io: Server, socket: Socket): void => {
         });
 
         if (!order)
-          return callback({ success: false, message: "Order not found" });
+          return reply(callback, {
+            success: false,
+            message: "Order not found",
+          });
 
         // Check if the order is in a state that allows cancellation. If the order is not "pending" or "confirmed", it cannot be cancelled, and an error message is returned to the client.
         if (!["pending", "confirmed"].includes(order.status)) {
-          return callback({
+          return reply(callback, {
             success: false,
             message: "Cannot cancel this order",
           });
@@ -127,10 +137,10 @@ export const orderHandler = (io: Server, socket: Socket): void => {
         });
 
         // Return a success response to the client indicating that the order has been successfully cancelled.
-        callback({ success: true });
+        reply(callback, { success: true });
       } catch (error) {
         console.error("❌ Cancel order error:", error);
-        callback({ success: false, message: "Failed to cancel order" });
+        reply(callback, { success: false, message: "Failed to cancel order" });
       }
     },
   );
@@ -149,10 +159,10 @@ export const orderHandler = (io: Server, socket: Socket): void => {
         });
 
         // Return the list of orders to the client, indicating a successful retrieval of the customer's order history.
-        callback({ success: true, orders });
+        reply(callback, { success: true, orders });
       } catch (error) {
         console.error("❌ Get orders error:", error);
-        callback({ success: false, message: "Failed to load orders" });
+        reply(callback, { success: false, message: "Failed to load orders" });
       }
     },
   );
@@ -166,9 +176,9 @@ export const orderHandler = (io: Server, socket: Socket): void => {
       socket.join("admins");
       console.log(`✅ Admin logged in: ${socket.id}`);
 
-      callback({ success: true });
+      reply(callback, { success: true });
     } else {
-      callback({ success: false, message: "Invalid password" });
+      reply(callback, { success: false, message: "Invalid password" });
     }
   });
 
@@ -182,7 +192,7 @@ export const orderHandler = (io: Server, socket: Socket): void => {
       try {
         // Check if the user is an admin
         if (!socket.data.isAdmin)
-          return callback({ success: false, message: "Unauthorized" });
+          return reply(callback, { success: false, message: "Unauthorized" });
 
         // Fetch orders from the database based on the provided status and limit. If no status is specified, all orders are fetched. The results are ordered by creation date in descending order, and the status history is included for each order.
         const orders = await prisma.order.findMany({
@@ -193,10 +203,10 @@ export const orderHandler = (io: Server, socket: Socket): void => {
         });
 
         // Return the list of orders to the client, indicating a successful retrieval of all orders for the admin.
-        callback({ success: true, orders });
+        reply(callback, { success: true, orders });
       } catch (error) {
         console.error("❌ Get all orders error:", error);
-        callback({ success: false, message: "Failed to load orders" });
+        reply(callback, { success: false, message: "Failed to load orders" });
       }
     },
   );
@@ -211,18 +221,21 @@ export const orderHandler = (io: Server, socket: Socket): void => {
       try {
         // Check if the user is an admin before allowing them to update the order status. If the user is not an admin, return an unauthorized error message to the client.
         if (!socket.data.isAdmin)
-          return callback({ success: false, message: "Unauthorized" });
+          return reply(callback, { success: false, message: "Unauthorized" });
 
         // Fetch the order from the database using the provided order ID. If the order does not exist, return an error message indicating that the order was not found.
         const order = await prisma.order.findUnique({
           where: { orderId: data.orderId },
         });
         if (!order)
-          return callback({ success: false, message: "Order not found" });
+          return reply(callback, {
+            success: false,
+            message: "Order not found",
+          });
 
         // Check if the status transition is valid based on the current status of the order and the new status provided. If the transition is not valid, return an error message indicating that the status transition is invalid.
         if (!isValidStatusTransition(order.status, data.newStatus)) {
-          return callback({
+          return reply(callback, {
             success: false,
             message: "Invalid status transition",
           });
@@ -255,10 +268,10 @@ export const orderHandler = (io: Server, socket: Socket): void => {
           newStatus: data.newStatus,
         });
 
-        callback({ success: true, order: result });
+        reply(callback, { success: true, order: result });
       } catch (error) {
         console.error("❌ Update status error:", error);
-        callback({ success: false, message: "Failed to update status" });
+        reply(callback, { success: false, message: "Failed to update status" });
       }
     },
   );
@@ -272,14 +285,14 @@ export const orderHandler = (io: Server, socket: Socket): void => {
     ) => {
       try {
         if (!socket.data.isAdmin)
-          return callback({ success: false, message: "Unauthorized" });
+          return reply(callback, { success: false, message: "Unauthorized" });
 
         // Fetch the order from the database using the provided order ID. If the order does not exist or is not in a "pending" state, return an error message indicating that the order cannot be accepted. This ensures that only valid orders can be accepted by an admin.
         const order = await prisma.order.findUnique({
           where: { orderId: data.orderId },
         });
         if (!order || order.status !== "pending") {
-          return callback({
+          return reply(callback, {
             success: false,
             message: "Cannot accept this order",
           });
@@ -315,10 +328,10 @@ export const orderHandler = (io: Server, socket: Socket): void => {
           .to("admins")
           .emit("orderAcceptedByAdmin", { orderId: data.orderId });
 
-        callback({ success: true, order: result });
+        reply(callback, { success: true, order: result });
       } catch (error) {
         console.error("❌ Accept order error:", error);
-        callback({ success: false, message: "Failed to accept order" });
+        reply(callback, { success: false, message: "Failed to accept order" });
       }
     },
   );
@@ -329,13 +342,13 @@ export const orderHandler = (io: Server, socket: Socket): void => {
     async (data: { orderId: string; reason?: string }, callback: Callback) => {
       try {
         if (!socket.data.isAdmin)
-          return callback({ success: false, message: "Unauthorized" });
+          return reply(callback, { success: false, message: "Unauthorized" });
 
         const order = await prisma.order.findUnique({
           where: { orderId: data.orderId },
         });
         if (!order || order.status !== "pending") {
-          return callback({
+          return reply(callback, {
             success: false,
             message: "Cannot reject this order",
           });
@@ -362,10 +375,10 @@ export const orderHandler = (io: Server, socket: Socket): void => {
           reason: data.reason,
         });
 
-        callback({ success: true });
+        reply(callback, { success: true });
       } catch (error) {
         console.error("❌ Reject order error:", error);
-        callback({ success: false, message: "Failed to reject order" });
+        reply(callback, { success: false, message: "Failed to reject order" });
       }
     },
   );
@@ -379,7 +392,7 @@ export const orderHandler = (io: Server, socket: Socket): void => {
     ) => {
       try {
         if (!socket.data.isAdmin)
-          return callback({ success: false, message: "Unauthorized" });
+          return reply(callback, { success: false, message: "Unauthorized" });
 
         const result = await prisma.order.update({
           where: { orderId: data.orderId },
@@ -391,10 +404,10 @@ export const orderHandler = (io: Server, socket: Socket): void => {
           orderId: data.orderId,
           estimatedTime: data.estimatedTime,
         });
-        callback({ success: true, order: result });
+        reply(callback, { success: true, order: result });
       } catch (error) {
         console.error("❌ Set time error:", error);
-        callback({
+        reply(callback, {
           success: false,
           message: "Order not found or update failed",
         });
@@ -406,7 +419,7 @@ export const orderHandler = (io: Server, socket: Socket): void => {
   socket.on("getLiveStats", async (callback: Callback) => {
     try {
       if (!socket.data.isAdmin)
-        return callback({ success: false, message: "Unauthorized" });
+        return reply(callback, { success: false, message: "Unauthorized" });
 
       // Calculate the start of today to filter orders created from this point onwards. This is used to get the count of orders placed today and to group orders by their status for live statistics.
       const today = new Date();
@@ -435,10 +448,10 @@ export const orderHandler = (io: Server, socket: Socket): void => {
         cancelled: counts.cancelled ?? 0,
       };
 
-      callback({ success: true, stats });
+      reply(callback, { success: true, stats });
     } catch (error) {
       console.error("❌ Get stats error:", error);
-      callback({ success: false, message: "Failed to load stats" });
+      reply(callback, { success: false, message: "Failed to load stats" });
     }
   });
 
