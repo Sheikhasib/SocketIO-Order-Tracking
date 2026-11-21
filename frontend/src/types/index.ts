@@ -74,3 +74,15 @@ export interface BasicResponse {
   success: boolean;
   message?: string;
 }
+
+export interface OrdersResponse {
+  success: boolean;
+  message?: string;
+  orders?: Order[];
+}
+
+export interface StatsResponse {
+  success: boolean;
+  message?: string;
+  stats?: LiveStats;
+}

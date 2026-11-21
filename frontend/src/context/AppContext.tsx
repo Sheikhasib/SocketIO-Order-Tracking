@@ -25,6 +25,7 @@ interface AppContextValue {
   handleAdminLogin: () => void;
   handleAdminLogout: () => void;
   showNotification: (message: string, type?: NotificationType) => void;
+  handleAdminSessionExpired: () => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -145,6 +146,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     showNotification("Logged out successfully", "success");
   };
 
+  // Dashboard-এ "Unauthorized" পেলে (refresh-এর পর নতুন socket admin থাকে না)
+  const handleAdminSessionExpired = () => {
+    localStorage.removeItem("isAdmin");
+    setIsAdminLoggedIn(false);
+    showNotification("Session expired. Please login again", "warning");
+  };
+
   // Persist admin login status in localStorage whenever it changes
   return (
     <AppContext.Provider
@@ -159,6 +167,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         isAdminLoggedIn,
         handleAdminLogin,
         handleAdminLogout,
+        handleAdminSessionExpired,
         showNotification,
       }}
     >

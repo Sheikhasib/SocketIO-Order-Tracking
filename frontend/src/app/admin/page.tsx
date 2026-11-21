@@ -1,6 +1,7 @@
 "use client";
 
 import AdminLogin from "@/components/admin/AdminLogin";
+import AdminDashboard from "@/components/admin/AdminDashboard";
 import { useApp } from "@/context/AppContext";
 
 export default function AdminPage() {
@@ -9,6 +10,7 @@ export default function AdminPage() {
     isAdminLoggedIn,
     handleAdminLogin,
     handleAdminLogout,
+    handleAdminSessionExpired,
     showNotification,
   } = useApp();
 
@@ -22,16 +24,12 @@ export default function AdminPage() {
     );
   }
 
-  // সাময়িক: পরের ধাপে এখানে AdminDashboard বসবে
   return (
-    <main className="p-8">
-      <h1 className="text-2xl font-bold">Admin Dashboard (coming next)</h1>
-      <button
-        onClick={handleAdminLogout}
-        className="mt-4 rounded bg-red-500 px-4 py-2 text-white"
-      >
-        Logout
-      </button>
-    </main>
+    <AdminDashboard
+      socket={socket}
+      onShowNotification={showNotification}
+      onLogout={handleAdminLogout}
+      onSessionExpired={handleAdminSessionExpired}
+    />
   );
 }
