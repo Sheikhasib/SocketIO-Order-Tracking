@@ -69,3 +69,8 @@ export interface PlaceOrderResponse {
 }
 
 export type OrderResponse = PlaceOrderResponse;
+
+export interface BasicResponse {
+  success: boolean;
+  message?: string;
+}
