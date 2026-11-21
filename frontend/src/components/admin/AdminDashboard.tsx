@@ -14,6 +14,7 @@ import type {
   OrdersResponse,
   StatsResponse,
 } from "@/types";
+import Link from "next/link";
 
 interface Props {
   socket: Socket | null;
@@ -266,6 +267,13 @@ const AdminDashboard = ({
                 </p>
               </div>
             </div>
+
+            <Link
+              href="/"
+              className="px-4 py-2.5 text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+            >
+              🏠 Home
+            </Link>
 
             <div className="flex items-center gap-3 justify-end">
               <ConnectionStatus connected={socket?.connected ?? false} />

@@ -9,6 +9,7 @@ interface Props {
   cart: CartItem[];
   socket: Socket | null;
   onShowNotification: (message: string, type?: NotificationType) => void;
+  onOrderPlaced?: () => void;
 }
 
 interface FormData {
@@ -21,9 +22,15 @@ interface FormData {
 
 type FormErrors = Partial<Record<keyof FormData, string>>;
 
-const OrderForm = ({ cart, socket, onShowNotification }: Props) => {
+const OrderForm = ({
+  cart,
+  socket,
+  onShowNotification,
+  onOrderPlaced,
+}: Props) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
     customerName: "",
     customerPhone: "",
@@ -121,6 +128,8 @@ const OrderForm = ({ cart, socket, onShowNotification }: Props) => {
       if (response.success && response.order) {
         const { orderId } = response.order;
         onShowNotification("Order placed successfully! 🎉", "success");
+        setPlacedOrderId(orderId);
+        onOrderPlaced?.(); // cart খালি করো
         // Navigate to tracking page
         setTimeout(() => {
           router.push(`/track/${orderId}`);
@@ -133,6 +142,16 @@ const OrderForm = ({ cart, socket, onShowNotification }: Props) => {
       }
     });
   };
+
+  if (placedOrderId) {
+    return (
+      <div className="container mx-auto px-4 py-12 text-center">
+        <div className="text-7xl mb-4">🎉</div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">Order placed!</h2>
+        <p className="text-gray-600">Taking you to order tracking...</p>
+      </div>
+    );
+  }
 
   if (cart.length === 0) {
     return (

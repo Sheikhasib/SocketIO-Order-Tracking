@@ -21,6 +21,7 @@ interface AppContextValue {
   updateQuantity: (itemId: string, newQuantity: number) => void;
   removeFromCart: (itemId: string) => void;
   clearCart: () => void;
+  clearCartSilently: () => void;
   isAdminLoggedIn: boolean;
   handleAdminLogin: () => void;
   handleAdminLogout: () => void;
@@ -134,6 +135,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // order সফল হলে confirm ছাড়াই cart খালি করার জন্য
+  const clearCartSilently = () => setCart([]);
+
   // Admin functions
   const handleAdminLogin = () => {
     setIsAdminLoggedIn(true);
@@ -164,6 +168,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         updateQuantity,
         removeFromCart,
         clearCart,
+        clearCartSilently,
         isAdminLoggedIn,
         handleAdminLogin,
         handleAdminLogout,
