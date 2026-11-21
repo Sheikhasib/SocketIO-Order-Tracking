@@ -1,11 +1,24 @@
 "use client";
 
+import type { CartItem } from "@/types";
 import { useRouter } from "next/navigation";
-import { useApp } from "@/context/AppContext";
+// import { useApp } from "@/context/AppContext";
 
-export default function Cart() {
+interface Props {
+  cart: CartItem[];
+  onUpdateQuantity: (itemId: string, newQuantity: number) => void;
+  onRemoveItem: (itemId: string) => void;
+  onClearCart: () => void;
+}
+
+export default function Cart({
+  cart,
+  onUpdateQuantity: updateQuantity,
+  onRemoveItem: removeFromCart,
+  onClearCart: clearCart,
+}: Props) {
   const router = useRouter();
-  const { cart, updateQuantity, removeFromCart, clearCart } = useApp();
+  //   const { cart, updateQuantity, removeFromCart, clearCart } = useApp();
 
   const subtotal = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,

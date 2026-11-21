@@ -60,3 +60,9 @@ export interface LiveStats {
   delivered: number;
   cancelled: number;
 }
+
+export interface PlaceOrderResponse {
+  success: boolean;
+  message?: string;
+  order?: Order;
+}

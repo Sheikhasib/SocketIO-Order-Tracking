@@ -1,11 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { menuItems, categories } from "@/data/menu";
-import { useApp } from "@/context/AppContext";
+import type { MenuItem } from "@/types";
+import { categories, menuItems } from "@/utils/menuData";
+// import { useApp } from "@/context/AppContext";
 
-export default function Menu() {
-  const { addToCart } = useApp();
+interface Props {
+  onAddToCart: (item: MenuItem) => void;
+}
+
+export default function Menu({ onAddToCart }: Props) {
+  //   const { addToCart } = useApp();
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   const filteredItems =
@@ -66,7 +71,7 @@ export default function Menu() {
                   ${item.price.toFixed(2)}
                 </span>
                 <button
-                  onClick={() => addToCart(item)}
+                  onClick={() => onAddToCart(item)}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition transform hover:scale-105 active:scale-95"
                 >
                   Add to Cart

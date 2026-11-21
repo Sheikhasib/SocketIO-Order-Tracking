@@ -4,9 +4,6 @@
   "description": "Real-time order tracking backend - Learn Socket.IO",
   "main": "dist/server.js",
   "type": "module",
-  "prisma": {
-    "schema": "prisma/schema"
-  },
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
@@ -22,18 +19,21 @@
   "author": "Sheikh Hasib Uzzaman",
   "license": "MIT",
   "dependencies": {
-    "@prisma/client": "^6.19.3",
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
-    "prisma": "^6.19.3",
+    "pg": "^8.23.1",
     "socket.io": "^4.8.4"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
     "nodemon": "^3.1.11",
+    "prisma": "^7.10.1",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   }

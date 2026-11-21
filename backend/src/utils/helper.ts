@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "../generated/prisma/client.js";
 import { OrderInput, OrderItem, Totals } from "../Interfaces/index.js";
 
 // This function generates a unique order ID based on the current date and a random number. The format of the order ID is "ORD-YYYYMMDD-RANDOM", where "YYYY" is the year, "MM" is the month, "DD" is the day, and "RANDOM" is a three-digit random number. This ensures that each order has a unique identifier that can be easily traced back to the date it was created.

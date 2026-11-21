@@ -4,16 +4,23 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import ConnectionStatus from "./ConnectionStatus";
-import { useApp } from "@/context/AppContext";
+// import { useApp } from "@/context/AppContext";
 
 interface Props {
+  cartCount?: number;
   showCart?: boolean;
   showAdmin?: boolean;
+  connected: boolean;
 }
 
-export default function Header({ showCart = true, showAdmin = true }: Props) {
+export default function Header({
+  cartCount = 0,
+  showCart = true,
+  showAdmin = true,
+  connected,
+}: Props) {
   const router = useRouter();
-  const { cart, connected } = useApp();
+  //   const { cart, connected } = useApp();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -40,9 +47,9 @@ export default function Header({ showCart = true, showAdmin = true }: Props) {
                 className="relative hover:bg-blue-500 px-3 py-2 rounded-lg transition"
               >
                 <span className="text-2xl">🛒</span>
-                {cart.length > 0 && (
+                {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                    {cart.length}
+                    {cartCount}
                   </span>
                 )}
               </button>

@@ -8,155 +8,177 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { socket } from "@/lib/socket";
+import type { Socket } from "socket.io-client";
+import { useSocket } from "@/hooks/useSocket";
 import Notification from "@/components/common/Notification";
 import type { CartItem, MenuItem, NotificationType } from "@/types";
 
 interface AppContextValue {
+  socket: Socket | null;
   connected: boolean;
   cart: CartItem[];
   addToCart: (item: MenuItem) => void;
-  updateQuantity: (itemId: string, quantity: number) => void;
+  updateQuantity: (itemId: string, newQuantity: number) => void;
   removeFromCart: (itemId: string) => void;
   clearCart: () => void;
-  clearCartSilently: () => void;
   isAdminLoggedIn: boolean;
-  adminLoginSuccess: () => void;
-  adminLogout: () => void;
+  handleAdminLogin: () => void;
+  handleAdminLogout: () => void;
   showNotification: (message: string, type?: NotificationType) => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
 
+// AppProvider component to wrap the application and provide context values
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [connected, setConnected] = useState(false);
+  const { socket, connected } = useSocket();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [notification, setNotification] = useState<{
     message: string;
     type: NotificationType;
   } | null>(null);
 
-  // Socket connection (একবারই)
+  // Admin login state
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+
+  // Load cart & admin status from localStorage
   useEffect(() => {
-    const onConnect = () => setConnected(true);
-    const onDisconnect = () => setConnected(false);
-
-    socket.on("connect", onConnect);
-    socket.on("disconnect", onDisconnect);
-    socket.connect();
-    setConnected(socket.connected);
-
-    return () => {
-      socket.off("connect", onConnect);
-      socket.off("disconnect", onDisconnect);
-      socket.disconnect();
-    };
-  }, []);
-
-  // localStorage থেকে cart ও admin অবস্থা লোড
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("cart");
-      if (saved) setCart(JSON.parse(saved));
-      if (localStorage.getItem("isAdmin") === "true") setIsAdminLoggedIn(true);
-    } catch (error) {
-      console.error("Failed to load saved data:", error);
+    const savedCart = localStorage.getItem("cart");
+    if (savedCart) {
+      try {
+        // Parse and set the cart state from localStorage
+        setCart(JSON.parse(savedCart));
+      } catch (error) {
+        console.error("Failed to load cart:", error);
+      }
     }
+
+    // Check admin login status from localStorage
+    const adminStatus = localStorage.getItem("isAdmin");
+    if (adminStatus === "true") {
+      setIsAdminLoggedIn(true);
+    }
+    // Mark the component as hydrated after loading from localStorage
     setHydrated(true);
   }, []);
 
-  // লোড হওয়ার পরেই শুধু cart সেভ হবে (নাহলে সেভ করা cart মুছে যেত)
+  // Save cart to localStorage whenever it changes (লোড হওয়ার পরে)
   useEffect(() => {
     if (hydrated) localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart, hydrated]);
 
-  const showNotification = useCallback(
-    (message: string, type: NotificationType = "success") => {
-      setNotification({ message, type });
-    },
-    [],
-  );
+  // Show notification helper
+  const showNotification = (
+    message: string,
+    type: NotificationType = "success",
+  ) => {
+    // Set the notification state to display the notification
+    setNotification({ message, type });
+  };
 
+  // Close notification helper
   const closeNotification = useCallback(() => setNotification(null), []);
 
+  // Cart functions
   const addToCart = (item: MenuItem) => {
-    const existing = cart.find((c) => c.id === item.id);
-    if (existing) {
+    const existingItem = cart.find((cartItem) => cartItem.id === item.id);
+
+    // If the item already exists in the cart, increase its quantity; otherwise, add it as a new item
+    if (existingItem) {
       setCart(
-        cart.map((c) =>
-          c.id === item.id ? { ...c, quantity: c.quantity + 1 } : c,
+        cart.map((cartItem) =>
+          cartItem.id === item.id
+            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            : cartItem,
         ),
       );
+      // Show notification for adding another item to the cart
       showNotification(`Added another ${item.name} to cart`, "success");
     } else {
+      // If the item is not in the cart, add it with an initial quantity of 1
       setCart([...cart, { ...item, quantity: 1 }]);
+      // Show notification for adding a new item to the cart
       showNotification(`${item.name} added to cart`, "success");
     }
   };
 
+  // Remove item from cart
   const removeFromCart = (itemId: string) => {
     setCart(cart.filter((item) => item.id !== itemId));
     showNotification("Item removed from cart", "info");
   };
 
-  const updateQuantity = (itemId: string, quantity: number) => {
-    if (quantity <= 0) {
+  // Update item quantity in cart
+  const updateQuantity = (itemId: string, newQuantity: number) => {
+    // If the new quantity is less than or equal to 0, remove the item from the cart
+    if (newQuantity <= 0) {
       removeFromCart(itemId);
       return;
     }
+
+    // Update the quantity of the specified item in the cart
     setCart(
-      cart.map((item) => (item.id === itemId ? { ...item, quantity } : item)),
+      cart.map((item) =>
+        item.id === itemId ? { ...item, quantity: newQuantity } : item,
+      ),
     );
   };
 
+  // Clear the entire cart with confirmation
   const clearCart = () => {
+    // Prompt the user for confirmation before clearing the cart
     if (window.confirm("Are you sure you want to clear your cart?")) {
       setCart([]);
       showNotification("Cart cleared", "info");
     }
   };
 
-  // order সফল হলে confirm ছাড়াই cart খালি করার জন্য
-  const clearCartSilently = () => setCart([]);
+  // Admin functions
+  const handleAdminLogin = () => {
+    setIsAdminLoggedIn(true);
+  };
 
-  const adminLoginSuccess = () => setIsAdminLoggedIn(true);
-
-  const adminLogout = () => {
+  // Admin logout function
+  const handleAdminLogout = () => {
     localStorage.removeItem("isAdmin");
     setIsAdminLoggedIn(false);
     showNotification("Logged out successfully", "success");
   };
 
+  // Persist admin login status in localStorage whenever it changes
   return (
     <AppContext.Provider
       value={{
+        socket,
         connected,
         cart,
         addToCart,
         updateQuantity,
         removeFromCart,
         clearCart,
-        clearCartSilently,
         isAdminLoggedIn,
-        adminLoginSuccess,
-        adminLogout,
+        handleAdminLogin,
+        handleAdminLogout,
         showNotification,
       }}
     >
-      {notification && (
-        <Notification
-          message={notification.message}
-          type={notification.type}
-          onClose={closeNotification}
-        />
-      )}
-      {children}
+      <div className="min-h-screen text-slate-800">
+        {/* Notification */}
+        {notification && (
+          <Notification
+            message={notification.message}
+            type={notification.type}
+            onClose={closeNotification}
+          />
+        )}
+        {children}
+      </div>
     </AppContext.Provider>
   );
 }
 
+// Custom hook to use the AppContext
 export function useApp() {
   const ctx = useContext(AppContext);
   if (!ctx) throw new Error("useApp must be used inside <AppProvider>");
